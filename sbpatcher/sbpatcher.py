@@ -1,63 +1,88 @@
-import sys, glob, os, shutil, fnmatch
+import sys, glob, os, shutil, fnmatch, json, commentjson
 
-if len(sys.argv) != 5:
-  print('Usage:   python sbpatcher.py <input folder> <output folder> <patch file> <pattern>')
-  sys.exit(1)
+def main():
 
-indir = sys.argv[1]
-outdir = sys.argv[2]
-patch = sys.argv[3]
-pattern = sys.argv[4]
+  if len(sys.argv) != 5:
+    print('Usage:   python sbpatcher.py <input folder> <output folder> <patch file> <pattern>')
+    sys.exit(1)
 
-if not os.path.isdir(indir):
-  print(indir + ' is not a directory; exiting')
-  sys.exit(1)
+  indir = sys.argv[1]
+  outdir = sys.argv[2]
+  patch = sys.argv[3]
+  pattern = sys.argv[4]
 
-if not os.path.isdir(outdir):
-  print(outdir + ' is not a directory; exiting')
-  sys.exit(1)
+  if not os.path.isdir(indir):
+    print(indir + ' is not a directory; exiting')
+    sys.exit(1)
 
-if not os.path.exists(patch):
-  print(patch + ' is not a file; exiting')
-  sys.exit(1)
+  if not os.path.isdir(outdir):
+    print(outdir + ' is not a directory; exiting')
+    sys.exit(1)
+
+  if not os.path.exists(patch):
+    print(patch + ' is not a file; exiting')
+    sys.exit(1)
 
 
-###########
+  ###########
 
-indir = os.path.realpath(indir)
-outdir = os.path.realpath(outdir)
-searchpath = indir + '/' + pattern
+  indir = os.path.realpath(indir)
+  outdir = os.path.realpath(outdir)
+  searchpath = indir + '/' + pattern
 
-print('Searching ' + searchpath)
+  print('Searching ' + searchpath)
 
-#files = glob.glob(searchpath)
-files = []
-for root, dirnames, filenames in os.walk(indir):
-  for filename in fnmatch.filter(filenames, pattern):
-    files.append(os.path.join(root, filename))
+  #files = glob.glob(searchpath)
+  files = []
+  for root, dirnames, filenames in os.walk(indir):
+    for filename in fnmatch.filter(filenames, pattern):
+      files.append(os.path.join(root, filename))
 
-print(str(len(files)) + ' files found\n')
+  if len(files) == 0:
+    print('No files found in ' + indir + ' matching pattern ' + pattern)
+    sys.exit(1)
 
-if len(files) == 0:
-  sys.exit(1)
+  filedict = {}
 
-filedict = {}
+  for f in files:
+    realpath = os.path.realpath(f)
+    patchout = realpath.replace(indir, outdir) + '.patch'
+    if file_matcher(realpath):
+      print('  ' + realpath + ' => ' + patchout)
+      filedict[realpath] = patchout
 
-for f in files:
-  realpath = os.path.realpath(f)
-  patchout = realpath.replace(indir, outdir)
-  print('  ' + realpath + ' => ' + patchout)
-  filedict[realpath] = patchout
+  print('\n' + str(len(filedict)) + ' files matched')
+  print('Proceed? [Y/y]')
+  proceed = raw_input()
 
-print('\nProceed? (Y/y)')
-proceed = raw_input()
+  if proceed.lower() != 'y':
+    sys.exit(0)
 
-if proceed.lower() != 'y':
-  sys.exit(0)
+  for inpath, outpath in filedict.iteritems():
+    if os.path.exists(outpath):
+      print('Patch file ' + outpath + ' already exists; skipping')
+      continue
 
-for key, value in filedict.iteritems():
-  if os.path.exists(value):
-    print('Patch file ' + value + ' already exists; skipping')
-    continue
-  print('creating patch file: ' + value)
-  #shutil.copyfile(patch, out)
+    print('creating patch file: ' + outpath)
+    os.makedirs(os.path.dirname(outpath))
+    shutil.copyfile(patch, outpath)
+
+
+def file_matcher(path):
+  with open(path) as file:
+    try:
+      jsoncontent = commentjson.load(file)
+
+      if 'smashable' in jsoncontent and jsoncontent['smashable'] == True:
+        return True
+      else:
+        return False
+    except:
+      print('Failed to read file ' + path)
+
+
+
+
+main()
+
+print('Finished!')
