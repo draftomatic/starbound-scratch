@@ -1,0 +1,32 @@
+[
+  {
+    "op": "add",
+    "path": "/scripts",
+    "value": [
+      "/objects/bombcontainer/bombcontainer.lua"
+    ]
+  },
+  {
+    "op": "add",
+    "path": "/scriptDelta",
+    "value": 5
+  },
+  {
+    "op": "add",
+    "path": "/explodeOnSmash",
+    "value": true
+  },
+  {
+    "op": "add",
+    "path": "/explosionProjectile",
+    "value": "zbomb"
+  },
+  {
+    "op": "add",
+    "path": "/explosionOffset",
+    "value": [
+      0,
+      0.5
+    ]
+  }
+]
