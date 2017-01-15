@@ -28,11 +28,9 @@ def main():
 
   indir = os.path.realpath(indir)
   outdir = os.path.realpath(outdir)
-  searchpath = indir + '/' + pattern
 
-  print('Searching ' + searchpath)
+  print('Searching ' + indir + ' for pattern ' + pattern)
 
-  #files = glob.glob(searchpath)
   files = []
   for root, dirnames, filenames in os.walk(indir):
     for filename in fnmatch.filter(filenames, pattern):
