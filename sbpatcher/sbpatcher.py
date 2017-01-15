@@ -47,7 +47,7 @@ def main():
   for f in files:
     realpath = os.path.realpath(f)
     patchout = realpath.replace(indir, outdir) + '.patch'
-    if file_matcher(realpath):
+    if filematcher(realpath):
       print('  ' + realpath + ' => ' + patchout)
       filedict[realpath] = patchout
 
@@ -58,27 +58,36 @@ def main():
   if proceed.lower() != 'y':
     sys.exit(0)
 
+  patchcount = 0
   for inpath, outpath in filedict.iteritems():
     if os.path.exists(outpath):
       print('Patch file ' + outpath + ' already exists; skipping')
       continue
 
-    print('creating patch file: ' + outpath)
-    os.makedirs(os.path.dirname(outpath))
-    shutil.copyfile(patch, outpath)
+    print('Creating patch file: ' + outpath)
 
-
-def file_matcher(path):
-  with open(path) as file:
     try:
+      os.makedirs(os.path.dirname(outpath))
+    except OSError as e:
+      if e.errno != 17:
+        raise e
+
+    shutil.copyfile(patch, outpath)
+    patchcount += 1
+  
+  print('\nCreated ' + str(patchcount) + ' patch files')
+
+def filematcher(path):
+  try:
+    with open(path) as file:
       jsoncontent = commentjson.load(file)
 
       if 'smashable' in jsoncontent and jsoncontent['smashable'] == True:
         return True
       else:
         return False
-    except:
-      print('Failed to read file ' + path)
+  except:
+    print('Failed to read file ' + path)
 
 
 
